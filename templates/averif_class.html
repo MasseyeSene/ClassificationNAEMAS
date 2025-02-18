@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classification NAEMAS</title>
+    <style>
+        .container {
+            width: 50%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f2f2f2;
+            border-radius: 8px;
+            text-align: center;
+        }
+        label, input, button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #6cd4fd;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Classification NAEMAS</h1>
+
+        <form id="classificationForm" class="mt-4">
+            <div class="mb-3">
+                <label for="DESIGNATION_PRECISE_ACTIVITE" class="form-label">Désignation Précise de l'Activité</label>
+                <input type="text" id="DESIGNATION_PRECISE_ACTIVITE" name="DESIGNATION_PRECISE_ACTIVITE" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Classifier</button>
+        </form>
+
+        <div id="error-message" class="text-danger mt-3"></div>
+
+        <div id="result" class="mt-5" style="display: none;">
+            <h3>Résultat de Classification</h3>
+            <p><strong>Nouvelle Activité :</strong> <span id="nouvelle_activite"></span></p>
+            <p><strong>NAEMAS Prédit :</strong> <span id="naemas"></span></p>
+            <p><strong>NAEMAS_3 :</strong> <span id="naemas_3"></span></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('classificationForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const DESIGNATION_PRECISE_ACTIVITE = document.getElementById('DESIGNATION_PRECISE_ACTIVITE').value.trim();
+            const errorMessage = document.getElementById('error-message');
+            const resultContainer = document.getElementById('result');
+            const nouvelleActiviteSpan = document.getElementById('nouvelle_activite');
+            const naemasSpan = document.getElementById('naemas');
+            const naemas3Span = document.getElementById('naemas_3');
+
+            errorMessage.textContent = '';
+            resultContainer.style.display = 'none';
+
+            try {
+                const response = await fetch('/classifier', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ DESIGNATION_PRECISE_ACTIVITE })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    nouvelleActiviteSpan.textContent = data.nouvelle_activite;
+                    naemasSpan.textContent = data.classification.NAEMAS;
+                    naemas3Span.textContent = data.classification.NAEMAS_3;
+
+                    resultContainer.style.display = 'block';
+                } else {
+                    const errorData = await response.json();
+                    errorMessage.textContent = `Erreur : ${errorData.error}`;
+                }
+            } catch (error) {
+                console.error('Erreur lors de la requête :', error);
+                errorMessage.textContent = 'Une erreur s\'est produite. Veuillez réessayer.';
+            }
+        });
+    </script>
+</body>
+</html>
